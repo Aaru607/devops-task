@@ -1,20 +1,20 @@
-# Use Node.js LTS
-FROM node:18
+# Use a lightweight Node.js image based on Alpine
+FROM node:18-alpine
 
-# Set working directory
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json & package-lock.json
+# Copy only package.json and package-lock.json first to leverage Docker cache
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install only production dependencies
+RUN npm install --production
 
-# Copy source code
+# Copy the rest of the application code
 COPY . .
 
-# Expose port
+# Expose the port your app runs on (change if different)
 EXPOSE 3000
 
-# Start the app
+# Command to run the application
 CMD ["node", "app.js"]
