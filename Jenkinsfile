@@ -26,7 +26,7 @@ pipeline {
 
         stage('Docker Build & Push') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-devops-task']]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
                     // Build Docker image and push to AWS ECR
                     bat """
                         docker build -t %IMAGE_NAME% .
@@ -40,7 +40,7 @@ pipeline {
 
         stage('Deploy to ECS') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-devops-task']]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
                     // Update ECS service to use the new image
                     bat """
                         aws ecs update-service --cluster devops-task-cluster ^
