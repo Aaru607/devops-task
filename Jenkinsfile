@@ -43,10 +43,9 @@ pipeline {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
                     // Update ECS service to use the new image
                     bat """
-                        aws ecs update-service --cluster devops-task-cluster ^
-                        --devops-task-service-iwaxpjwn^
-                        --force-new-deployment
-                    """
+aws ecs update-service --cluster devops-task-cluster --service devops-task-service-iwaxpjwn --force-new-deployment
+"""
+
                 }
             }
         }
