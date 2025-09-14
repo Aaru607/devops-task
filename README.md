@@ -1,61 +1,169 @@
-# Logo Server
+# DevOps Task Application
 
-A simple Express.js web server that serves the Swayatt logo image.
+## Overview
+This repository contains a **Node.js sample application** deployed using **CI/CD pipeline** with Jenkins, Docker, and AWS ECS. The pipeline demonstrates automation, scalability, and best DevOps practices.
 
-## What is this app?
+---
 
-This is a lightweight Node.js application built with Express.js that serves a single logo image (`logoswayatt.png`) when accessed through a web browser. When you visit the root URL, the server responds by displaying the Swayatt logo.
+## Architecture Diagram
+![Architecture](./docs/architecture.png)
 
-## Prerequisites
+**Flow:**
+1. Developer pushes code to GitHub (`dev` or `main` branch)
+2. Jenkins triggers pipeline via webhook
+3. Pipeline stages:
+   - **Build**: Install dependencies & run tests
+   - **Dockerize**: Build Docker image
+   - **Push**: Push image to AWS ECR
+   - **Deploy**: Update ECS service
+4. Application is accessible via public URL
 
-- Node.js (version 12 or higher)
-- npm (Node Package Manager)
+---
 
-## Installation
+## Setup Instructions
 
-1. Clone or download this repository
-2. Navigate to the project directory:
+### Prerequisites
+- GitHub account
+- AWS account
+- Jenkins server with Docker & AWS CLI
+- Node.js installed locally (optional for testing)
+
+### Steps
+1. **Clone the repository**
    ```bash
-   cd "devops task"
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+   git clone https://github.com/<your-username>/devops-task.git
+   cd devops-task
+2. Build & Run Locally
+cd app
+npm install
+npm test
+node index.js
+Access app at: http://localhost:3000
 
-## How to Start the App
+Docker Build
 
-Run the following command:
-```bash
-npm start
-```
+docker build -t devops-task .
+docker run -p 3000:3000 devops-task
 
-The server will start and display:
-```
-Server running on http://localhost:3000
-```
 
-## Usage
+Jenkins Pipeline
 
-Once the server is running, open your web browser and navigate to:
-```
-http://localhost:3000
-```
+Configure pipeline with Jenkinsfile
 
-You will see the Swayatt logo displayed in your browser.
+Add GitHub webhook trigger
 
-## Project Structure
+Add AWS credentials for ECR/ECS
 
-```
-├── app.js              # Main server file
-├── package.json        # Project dependencies and scripts
-├── logoswayatt.png     # Logo image file
-└── README.md          # This file
-```
+Run pipeline to automatically deploy app
 
-## Technical Details
+AWS ECS Deployment
 
-- **Framework**: Express.js
-- **Port**: 3000
-- **Endpoint**: GET `/` - serves the logo image
-- **File served**: `logoswayatt.png`
+Push Docker image to AWS ECR
+
+Update ECS service with new image
+
+App accessible via ECS public URL
+
+Deployment Proof
+
+Public URL: (Add ECS ALB URL or Cloud Run URL)
+
+Screenshots: See deployment-proof/screenshots/
+
+Tools & Services Used
+
+CI/CD: Jenkins
+
+Version Control: GitHub
+
+Containerization: Docker
+
+Cloud Deployment: AWS ECS, ECR
+
+Monitoring/Logging: CloudWatch
+
+Infrastructure (Optional): Terraform / CloudFormation
+
+Challenges Faced
+
+ECS service not updating initially due to incorrect service name.
+
+Docker image layers caching causing push delays.
+
+Correct AWS IAM role and permissions required for Jenkins.
+
+Solutions:
+
+Verified ECS service name before deployment
+
+Used docker tag and force-push to ECR
+
+Created dedicated IAM user with ECS/ECR permissions
+
+Possible Improvements
+
+Add Kubernetes deployment (EKS/GKE) for scalability
+
+Add automated rollback on failed deployments
+
+Integrate monitoring dashboard (CloudWatch/Stackdriver)
+
+
+---
+
+## **3️⃣ WRITEUP.md (Optional)**
+
+```markdown
+# DevOps Task Write-up
+
+## Tools & Services Used
+- GitHub (version control)
+- Jenkins (CI/CD)
+- Docker (containerization)
+- AWS ECR & ECS (deployment)
+- CloudWatch (monitoring)
+- Node.js (sample application)
+
+## Challenges Faced
+- ECS deployment errors due to wrong service name
+- AWS permissions required for Jenkins to push images
+- Docker image push delay due to caching layers
+
+## Solutions
+- Verified ECS service name and task definition version
+- Created dedicated IAM credentials for Jenkins
+- Forced Docker push for layers
+
+## Future Improvements
+- Deploy on Kubernetes for high scalability
+- Terraform-based infrastructure provisioning
+- Add alerting for ECS task failures
+
+4️⃣ Deployment Proof
+
+Folder: deployment-proof/
+
+Include:
+
+Screenshots of Jenkins stages:
+
+Build & Test
+
+Docker build
+
+Docker push
+
+ECS deployment
+
+Website running screenshot
+
+public-url.txt with deployed app URL
+
+5️⃣ Architecture Diagram
+
+Create docs/architecture.png showing:
+
+GitHub → Jenkins → Docker → AWS ECR → AWS ECS → Public URL
+
+
+Optional: include CloudWatch monitoring flow
