@@ -19,7 +19,11 @@ pipeline {
             steps {
                 echo 'Installing dependencies and running tests...'
                 bat 'npm install'
-                bat 'npm test || echo Tests skipped or failed'
+                
+                // Wrap test in catchError so pipeline continues even if tests fail
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    bat 'npm test'
+                }
             }
         }
 
@@ -27,7 +31,7 @@ pipeline {
             steps {
                 script {
                     echo "Building Docker image..."
-                    bat "docker build -t %IMAGE_NAME%:%TAG% ."
+                    bat "docker build -t ${IMAGE_NAME}:${TAG} ."
                 }
             }
         }
@@ -37,8 +41,8 @@ pipeline {
                 script {
                     echo "Pushing Docker image to DockerHub..."
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin %REGISTRY%"
-                        bat "docker push %IMAGE_NAME%:%TAG%"
+                        bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin ${REGISTRY}"
+                        bat "docker push ${IMAGE_NAME}:${TAG}"
                     }
                 }
             }
