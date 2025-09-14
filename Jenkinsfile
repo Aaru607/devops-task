@@ -2,64 +2,51 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = 'dockerhub-creds' // Jenkins credentials ID for Docker Hub
-        IMAGE_NAME = 'aaru9234/devops-task'       // Your Docker Hub image name
+        AWS_REGION = 'ap-south-1'
+        ECR_REPO = '905418143897.dkr.ecr.ap-south-1.amazonaws.com/devops-task-repo'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo 'Checking out code from GitHub...'
-                checkout scm
+                git branch: 'dev', url: 'https://github.com/Aaru607/devops-task.git', credentialsId: 'github-pat'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Build & Test') {
             steps {
-                echo 'Installing npm dependencies...'
-                bat 'npm install'
+                sh 'npm install'
+                sh 'npm test || echo "Tests failed but continuing..."'
             }
         }
 
-        stage('Test') {
+        stage('Docker Build & Push') {
             steps {
-                echo 'Running tests (if any)...'
-                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    bat 'npm test || echo Tests skipped or failed'
+                withAWS(region: "${AWS_REGION}", credentials: 'aws-credentials') {
+                    sh """
+                        docker build -t devops-task .
+                        docker tag devops-task:latest ${ECR_REPO}:latest
+                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO}
+                        docker push ${ECR_REPO}:latest
+                    """
                 }
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Deploy to ECS') {
             steps {
-                echo 'Building Docker image...'
-                bat 'docker build -t %IMAGE_NAME%:latest .'
-            }
-        }
-
-        stage('Push to Docker Hub') {
-            steps {
-                echo 'Pushing Docker image to Docker Hub...'
-                withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIALS,
-                        usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
-                    bat 'docker push %IMAGE_NAME%:latest'
-                    bat 'docker logout'
+                withAWS(region: "${AWS_REGION}", credentials: 'aws-credentials') {
+                    sh """
+                        aws ecs update-service --cluster devops-task-cluster \
+                        --service devops-task-service \
+                        --force-new-deployment
+                    """
                 }
             }
         }
     }
 
     post {
-        always {
-            echo 'Cleaning up...'
-            bat 'docker logout'
-        }
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed!'
-        }
+        always { echo 'Pipeline finished!' }
     }
 }
