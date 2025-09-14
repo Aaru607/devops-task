@@ -18,8 +18,8 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Installing dependencies and running tests...'
-                sh 'npm install'
-                sh 'npm test || echo "Tests skipped or failed"'
+                bat 'npm install'
+                bat 'npm test || echo Tests skipped or failed'
             }
         }
 
@@ -27,7 +27,7 @@ pipeline {
             steps {
                 script {
                     echo "Building Docker image..."
-                    sh "docker build -t ${IMAGE_NAME}:${TAG} ."
+                    bat "docker build -t %IMAGE_NAME%:%TAG% ."
                 }
             }
         }
@@ -37,8 +37,8 @@ pipeline {
                 script {
                     echo "Pushing Docker image to DockerHub..."
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin ${REGISTRY}"
-                        sh "docker push ${IMAGE_NAME}:${TAG}"
+                        bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin %REGISTRY%"
+                        bat "docker push %IMAGE_NAME%:%TAG%"
                     }
                 }
             }
@@ -47,7 +47,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo "Deploying to cloud environment..."
-                sh 'echo "Deployment script goes here."'
+                bat 'echo Deployment script goes here.'
             }
         }
     }
@@ -55,7 +55,7 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            sh 'docker logout'
+            bat 'docker logout'
         }
     }
 }
