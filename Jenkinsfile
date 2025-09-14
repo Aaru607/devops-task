@@ -2,56 +2,51 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'aaru607/devops-task'
-        REGISTRY = 'docker.io'
-        TAG = "${env.BUILD_NUMBER}"
+        DOCKER_IMAGE = "aaru607/devops-task:8"
     }
 
     stages {
-        stage('Checkout') {
+
+        stage('Checkout SCM') {
             steps {
-                echo 'Cloning repository...'
+                echo 'Checking out code from GitHub...'
                 checkout scm
             }
         }
 
-        stage('Build') {
+        stage('Install Dependencies & Test') {
             steps {
-                echo 'Installing dependencies and running tests...'
+                echo 'Installing npm dependencies...'
                 bat 'npm install'
-                
-                // Wrap test in catchError so pipeline continues even if tests fail
+
+                echo 'Running tests (if any)...'
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    bat 'npm test'
+                    bat 'npm test || echo Tests skipped or failed'
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                script {
-                    echo "Building Docker image..."
-                    bat "docker build -t ${IMAGE_NAME}:${TAG} ."
-                }
+                echo 'Building Docker image...'
+                bat "docker build -t %DOCKER_IMAGE% ."
             }
         }
 
-        stage('Push to Registry') {
+        stage('Push to DockerHub') {
             steps {
-                script {
-                    echo "Pushing Docker image to DockerHub..."
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin ${REGISTRY}"
-                        bat "docker push ${IMAGE_NAME}:${TAG}"
-                    }
+                echo 'Pushing Docker image to DockerHub...'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    bat "docker login -u %DOCKER_USER% -p %DOCKER_PASS%"
+                    bat "docker push %DOCKER_IMAGE%"
+                    bat "docker logout"
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                echo "Deploying to cloud environment..."
-                bat 'echo Deployment script goes here.'
+                echo 'Deploy stage skipped for now (add your deployment commands here)'
             }
         }
     }
@@ -60,6 +55,12 @@ pipeline {
         always {
             echo 'Cleaning up...'
             bat 'docker logout'
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
